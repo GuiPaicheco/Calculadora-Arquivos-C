@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Exercícios - JS Simples</title>
+  <style>
+    :root{font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+    body{max-width:980px;margin:28px auto;padding:18px;background:#f7f7fb;color:#111;border-radius:10px}
+    h1{font-size:20px;margin-bottom:6px}
+    section{background:#fff;padding:12px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.04);margin-bottom:14px}
+    label{display:block;margin:8px 0 6px;font-weight:600}
+    input[type="number"], input[type="text"], button, textarea{font-size:14px;padding:8px;border-radius:6px;border:1px solid #d0d3dc}
+    button{cursor:pointer}
+    .row{display:flex;gap:8px;flex-wrap:wrap}
+    .inputs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:8px}
+    .small{font-size:13px}
+    pre{background:#f0f4ff;padding:10px;border-radius:6px;overflow:auto}
+    .score{display:flex;gap:14px;align-items:center}
+    .muted{color:#555;font-size:13px}
+  </style>
+</head>
+<body>
+  <h1>Exercícios de JavaScript</h1>
+
+  <section id="ex1">
+    <h2>Exercício 01</h2>
+    <label>Quantidade de notas (N)</label>
+    <div class="row">
+      <input id="qtdNotas" type="number" min="1" value="3">
+      <button id="gerarNotas">Gerar campos</button>
+    </div>
+    <div id="containerNotas" class="inputs-grid"></div>
+    <div style="margin-top:10px">
+      <button id="calcularMedia">Calcular média</button>
+      <span id="resultadoMedia" class="muted"></span>
+    </div>
+  </section>
+
+  <section id="ex2">
+    <h2>Exercício 02</h2>
+    <div class="row">
+      <button class="jogada" data-move="pedra">Pedra</button>
+      <button class="jogada" data-move="papel">Papel</button>
+      <button class="jogada" data-move="tesoura">Tesoura</button>
+    </div>
+    <div style="margin-top:10px">
+      <div id="resultadoJogo" class="muted"></div>
+      <div style="margin-top:8px" class="score">
+        <div>Vitórias: <strong id="vitoria">0</strong></div>
+        <div>Derrotas: <strong id="derrota">0</strong></div>
+        <div>Empates: <strong id="empate">0</strong></div>
+        <button id="zerarPlacar">Zerar</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="ex3">
+    <h2>Exercício 03</h2>
+    <label>Digite um número</label>
+    <div class="row">
+      <input id="numPrimo" type="number" min="0" value="7">
+      <button id="verificarPrimo">Verificar</button>
+    </div>
+    <div style="margin-top:10px"><span id="resultadoPrimo" class="muted"></span></div>
+  </section>
+
+  <section id="ex4">
+    <h2>Exercício 04</h2>
+    <label>Quantos termos (N)</label>
+    <div class="row">
+      <input id="qtdFib" type="number" min="1" value="8">
+      <button id="gerarFib">Gerar sequência</button>
+    </div>
+    <div style="margin-top:10px"><pre id="saidaFib"></pre></div>
+  </section>
+
+  <script>
+    // Exercicio 01
+    const gerarNotasBtn = document.getElementById('gerarNotas');
+    const containerNotas = document.getElementById('containerNotas');
+    const qtdNotasInput = document.getElementById('qtdNotas');
+    const calcularMediaBtn = document.getElementById('calcularMedia');
+    const resultadoMediaSpan = document.getElementById('resultadoMedia');
+
+    function criarCamposNotas(n){
+      containerNotas.innerHTML = '';
+      for(let i=0;i<n;i++){
+        const inp = document.createElement('input');
+        inp.type = 'number';
+        inp.step = '0.01';
+        inp.min = '0';
+        inp.max = '10';
+        inp.placeholder = 'Nota ' + (i+1);
+        containerNotas.appendChild(inp);
+      }
+    }
+
+    gerarNotasBtn.addEventListener('click', ()=>{
+      const n = parseInt(qtdNotasInput.value) || 0;
+      if(n>0) criarCamposNotas(n);
+    });
+
+    calcularMediaBtn.addEventListener('click', ()=>{
+      const inputs = Array.from(containerNotas.querySelectorAll('input'));
+      if(inputs.length === 0){ resultadoMediaSpan.textContent = ' Gere os campos primeiro.'; return; }
+      const notas = inputs.map(i => parseFloat(i.value)).filter(v => !Number.isNaN(v));
+      if(notas.length !== inputs.length){ resultadoMediaSpan.textContent = ' Preencha todas as notas.'; return; }
+      const soma = notas.reduce((a,b)=>a+b,0);
+      const media = soma / notas.length;
+      resultadoMediaSpan.textContent = ' Média da turma: ' + (Math.round(media*100)/100).toFixed(2);
+    });
+
+    // inicializa campos padrão
+    criarCamposNotas(parseInt(qtdNotasInput.value) || 3);
+
+    // Exercicio 02
+    const botoes = document.querySelectorAll('.jogada');
+    const resultadoJogo = document.getElementById('resultadoJogo');
+    const vitoriaEl = document.getElementById('vitoria');
+    const derrotaEl = document.getElementById('derrota');
+    const empateEl = document.getElementById('empate');
+    const zerarPlacarBtn = document.getElementById('zerarPlacar');
+
+    function carregarPlacar(){
+      const s = JSON.parse(localStorage.getItem('placar_rps') || '{"v":0,"d":0,"e":0}');
+      vitoriaEl.textContent = s.v;
+      derrotaEl.textContent = s.d;
+      empateEl.textContent = s.e;
+    }
+    function salvarPlacar(v,d,e){
+      localStorage.setItem('placar_rps', JSON.stringify({v:v,d:d,e:e}));
+      carregarPlacar();
+    }
+
+    function resultadoFinal(meu, pc){
+      if(meu === pc) return 'empate';
+      if((meu==='pedra' && pc==='tesoura') || (meu==='tesoura' && pc==='papel') || (meu==='papel' && pc==='pedra')) return 'vitoria';
+      return 'derrota';
+    }
+
+    botoes.forEach(b => b.addEventListener('click', ()=>{
+      const meu = b.dataset.move;
+      const opcoes = ['pedra','papel','tesoura'];
+      const pc = opcoes[Math.floor(Math.random()*3)];
+      const res = resultadoFinal(meu, pc);
+      let placar = JSON.parse(localStorage.getItem('placar_rps') || '{"v":0,"d":0,"e":0}');
+      if(res === 'vitoria') placar.v += 1;
+      if(res === 'derrota') placar.d += 1;
+      if(res === 'empate') placar.e += 1;
+      salvarPlacar(placar.v, placar.d, placar.e);
+      resultadoJogo.textContent = `Você: ${meu} — Computador: ${pc} → ${res.toUpperCase()}`;
+    }));
+
+    zerarPlacarBtn.addEventListener('click', ()=>{ salvarPlacar(0,0,0); resultadoJogo.textContent = 'Placar zerado.'; });
+
+    carregarPlacar();
+
+    // Exercicio 03
+    const numPrimoInput = document.getElementById('numPrimo');
+    const verificarPrimoBtn = document.getElementById('verificarPrimo');
+    const resultadoPrimo = document.getElementById('resultadoPrimo');
+
+    function isPrime(n){
+      n = Math.floor(n);
+      if(n < 2) return false;
+      if(n === 2) return true;
+      if(n % 2 === 0) return false;
+      const limite = Math.floor(Math.sqrt(n));
+      for(let i=3;i<=limite;i+=2) if(n % i === 0) return false;
+      return true;
+    }
+
+    verificarPrimoBtn.addEventListener('click', ()=>{
+      const val = Number(numPrimoInput.value);
+      if(!Number.isFinite(val)){ resultadoPrimo.textContent = 'Informe um número válido.'; return; }
+      resultadoPrimo.textContent = isPrime(val) ? `${val} é primo.` : `${val} não é primo.`;
+    });
+
+    // Exercicio 04
+    const qtdFibInput = document.getElementById('qtdFib');
+    const gerarFibBtn = document.getElementById('gerarFib');
+    const saidaFib = document.getElementById('saidaFib');
+
+    function gerarFibonacci(n){
+      n = Math.floor(n);
+      if(n <= 0) return [];
+      if(n === 1) return [0];
+      const arr = [0,1];
+      while(arr.length < n) arr.push(arr[arr.length-1] + arr[arr.length-2]);
+      return arr;
+    }
+
+    gerarFibBtn.addEventListener('click', ()=>{
+      const n = parseInt(qtdFibInput.value) || 0;
+      if(n <= 0){ saidaFib.textContent = 'Informe um N maior que 0.'; return; }
+      const seq = gerarFibonacci(n);
+      saidaFib.textContent = seq.join(', ');
+    });
+
+  </script>
+</body>
+</html>
